@@ -27,52 +27,66 @@ def obtener_estadisticas():
 
     try:
         pasos = [item["pasos"] for item in registros if isinstance(item.get("pasos"), (int, float))]
+        temperaturas = [item["temperatura"] for item in registros if isinstance(item.get("temperatura"), (int, float))]
     except (TypeError, KeyError):
-        raise HTTPException(status_code=500, detail="Estructura de datos inválida: faltan claves 'pasos'")
+        raise HTTPException(status_code=500, detail="Estructura de datos inválida: faltan claves 'pasos' o 'temperatura'")
 
-    if len(pasos) < 2:
+    if len(pasos) < 2 or len(temperaturas) < 2:
         raise HTTPException(status_code=400, detail="No hay suficientes datos para estadísticas")
 
-    # Estadísticas: media y desviación estándar
+    # Estadísticas de pasos
     try:
-        media = statistics.mean(pasos)
-        desviacion = statistics.stdev(pasos)
+        media_pasos = statistics.mean(pasos)
+        desviacion_pasos = statistics.stdev(pasos)
     except statistics.StatisticsError:
-        # Por si no hay suficiente variabilidad para stdev
-        media = statistics.mean(pasos)
-        desviacion = 0.0
+        media_pasos = statistics.mean(pasos)
+        desviacion_pasos = 0.0
 
     # Distribución binomial
-    n = 60  # segundos por minuto
-    # Probabilidad p debe estar entre 0 y 1
-    p = media / n
-    if p < 0:
-        p = 0
-    elif p > 1:
-        p = 1
-
-    # Cálculo probabilidad más de 50 pasos en 1 minuto
+    n = 60
+    p = media_pasos / n
+    p = max(0, min(p, 1))
     try:
         prob_mas_50 = 1 - binom.cdf(50, n, p)
     except Exception:
         prob_mas_50 = 0.0
 
-    # Clasificación de actividad
+    # Clasificación actividad
     activos = sum(1 for paso in pasos if paso > 30)
     inactivos = len(pasos) - activos
     porcentaje_activo = (activos / len(pasos) * 100) if pasos else 0
 
-    # Aseguramos que no haya NaN en el retorno (en caso de algún cálculo extraño)
+    # Estadísticas temperatura
+    try:
+        media_temp = statistics.mean(temperaturas)
+        desviacion_temp = statistics.stdev(temperaturas)
+    except statistics.StatisticsError:
+        media_temp = statistics.mean(temperaturas)
+        desviacion_temp = 0.0
+
+    # Clasificación temperatura
+    frio = sum(1 for t in temperaturas if t < 18)
+    templado = sum(1 for t in temperaturas if 18 <= t <= 25)
+    calor = sum(1 for t in temperaturas if t > 25)
+
     def safe_round(value, digits=2):
         if value is None or (isinstance(value, float) and math.isnan(value)):
             return 0.0
         return round(value, digits)
 
     return {
-        "media_pasos": safe_round(media),
-        "desviacion_estandar": safe_round(desviacion),
+        # Pasos
+        "media_pasos": safe_round(media_pasos),
+        "desviacion_estandar_pasos": safe_round(desviacion_pasos),
         "prob_mas_50_pasos": safe_round(prob_mas_50, 4),
         "minutos_activos": activos,
         "minutos_inactivos": inactivos,
-        "porcentaje_activo": safe_round(porcentaje_activo)
+        "porcentaje_activo": safe_round(porcentaje_activo),
+        
+        # Temperatura
+        "media_temperatura": safe_round(media_temp),
+        "desviacion_estandar_temperatura": safe_round(desviacion_temp),
+        "frio": frio,
+        "templado": templado,
+        "calor": calor
     }
