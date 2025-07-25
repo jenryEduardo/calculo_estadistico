@@ -10,7 +10,7 @@ app = FastAPI()
 
 @app.get("/bme280/estadisticas")
 def estadisticas_bme280():
-    url = "http://localhost:8082/bme"  # <--- cambia esto según tu API
+    url = "https://vivaltest-back.namixcode.cc/bme"  # <--- cambia esto según tu API
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -54,7 +54,7 @@ def estadisticas_bme280():
 
 @app.get("/mlx/estadisticas")
 def estadisticas_mlx():
-    url = "http://localhost:8080/mlx"
+    url = "https://vivaltest-back.namixcode.cc/mlx"
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -93,7 +93,7 @@ def estadisticas_mlx():
 
 @app.get("/mpu6050/estadisticas")
 def estadisticas_mpu_pasos():
-    url = "http://localhost:8080/mpu/get"  # Cambia esto si tu endpoint real es otro
+    url = "https://vivaltest-back.namixcode.cc/mpu/get"  # Cambia esto si tu endpoint real es otro
     response = requests.get(url)
 
     if response.status_code != 200:

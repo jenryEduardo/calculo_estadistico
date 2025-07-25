@@ -1,6 +1,6 @@
 import requests
 
-url = "http://localhost:8080/mpu"
+url = "https://vivaltest-back.namixcode.cc/mpu"
 
 response = requests.get(url)
 

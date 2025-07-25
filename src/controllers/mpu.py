@@ -9,7 +9,7 @@ import math
 
 
 def DataCompleteMPU():
-    url = "http://localhost:8082/mpu"
+    url = "https://vivaltest-back.namixcode.cc/mpu"
     response = requests.get(url)
 
     if response.status_code != 200:

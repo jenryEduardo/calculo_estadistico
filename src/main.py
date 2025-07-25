@@ -24,7 +24,7 @@ app.add_middleware(
 
 @app.get("/bme280/estadisticas")
 def estadisticas_bme280():
-    url = "http://localhost:8082/bme"
+    url = "https://vivaltest-back.namixcode.cc/bme"
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -68,7 +68,7 @@ def estadisticas_bme280():
 
 @app.get("/mlx/estadisticas")
 def estadisticas_mlx():
-    url = "http://localhost:8080/mlx"
+    url = "https://vivaltest-back.namixcode.cc/mlx"
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -107,7 +107,7 @@ def estadisticas_mlx():
 
 @app.get("/mpu6050/estadisticas")
 def estadisticas_mpu_pasos():
-    url = "http://localhost:8080/mpu/get"
+    url = "https://vivaltest-back.namixcode.cc/mpu/get"
     response = requests.get(url)
 
     if response.status_code != 200:
