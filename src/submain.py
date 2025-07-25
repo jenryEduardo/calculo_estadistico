@@ -1,30 +1,16 @@
-import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 import requests
 import statistics
 from scipy.stats import binom
+import math
 
-app = FastAPI(
-    title="API Estadísticas Sensores",
-    description="Estadísticas para sensores BME280, MLX90614 y MPU6050",
-    version="1.0.0"
-)
-
-# CORS para permitir llamadas desde el frontend (React, Angular, etc.)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # o ["http://localhost:3000"] si solo React local
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI()
 
 
 @app.get("/bme280/estadisticas")
 def estadisticas_bme280():
-    url = "http://localhost:8082/bme"
+    url = "http://localhost:8082/bme"  # <--- cambia esto según tu API
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -51,7 +37,7 @@ def estadisticas_bme280():
         except statistics.StatisticsError:
             desviacion = 0.0
         p = sum(1 for d in data if d > umbral) / len(data)
-        p_binomial = 1 - binom.cdf(10, 20, p)
+        p_binomial = 1 - binom.cdf(10, 20, p)  # ejemplo: 20 mediciones, más de 10 altas
         return {
             f"media_{tipo}": round(media, 2),
             f"desviacion_{tipo}": round(desviacion, 2),
@@ -107,7 +93,7 @@ def estadisticas_mlx():
 
 @app.get("/mpu6050/estadisticas")
 def estadisticas_mpu_pasos():
-    url = "http://localhost:8080/mpu/get"
+    url = "http://localhost:8080/mpu/get"  # Cambia esto si tu endpoint real es otro
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -125,15 +111,18 @@ def estadisticas_mpu_pasos():
     except KeyError:
         raise HTTPException(status_code=500, detail="El campo 'pasos' no está en los datos")
 
+    # Estadísticas básicas
     media = statistics.mean(pasos)
     try:
         desviacion = statistics.stdev(pasos)
     except statistics.StatisticsError:
         desviacion = 0.0
 
+    # Probabilidad de pasos altos (>10)
     p_alto = sum(1 for p in pasos if p > 10) / len(pasos)
     p_binomial = 1 - binom.cdf(5, 10, p_alto)
 
+    # Clasificación de actividad
     categorias = {
         "sedentario": 0,
         "ligero": 0,
@@ -159,6 +148,7 @@ def estadisticas_mpu_pasos():
         "muy_activo": round(categorias["muy_activo"] * 100 / total, 2)
     }
 
+    # Retornar todo junto
     return {
         "media_pasos": round(media, 2),
         "desviacion_pasos": round(desviacion, 2),
@@ -166,7 +156,3 @@ def estadisticas_mpu_pasos():
         "prob_binomial_altos": round(p_binomial, 4),
         "distribucion_actividad": distribucion_actividad
     }
-
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
